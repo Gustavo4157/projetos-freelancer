@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulador de padrão de vida | Vertex Capital</title>
+<meta name="description" content="Descubra quanto você precisa acumular para manter seu padrão de vida sem depender do INSS.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ===== MARCA: troque as cores aqui ===== */
+:root{
+  --bg:#070d0c; --bg2:#0e2216; --card:rgba(255,255,255,.045); --line:rgba(255,255,255,.1);
+  --txt:#e9eeea; --mut:#8a9a92; --green:#3fae4f; --green2:#58c468; --warn:#e0b04a;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0}
+html{background:var(--bg)}
+body{font-family:var(--sans);color:var(--txt);min-height:100vh;line-height:1.5;
+  background:radial-gradient(120% 70% at 85% 0%,var(--bg2),transparent 60%),var(--bg);padding:20px 18px 48px}
+.wrap{max-width:560px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.14em;font-size:13px;margin-bottom:34px}
+.brand svg{width:20px;height:20px}
+h1{font-size:clamp(30px,8vw,42px);line-height:1.08;letter-spacing:-.02em;font-weight:700;
+  background:linear-gradient(180deg,#fff,#aab5af);-webkit-background-clip:text;background-clip:text;color:transparent}
+h1 em{font-style:normal;background:none;-webkit-text-fill-color:var(--green2)}
+.lead{color:var(--mut);margin:14px 0 26px;font-size:16px;max-width:46ch}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px 18px;backdrop-filter:blur(6px)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 12px}
+.full{grid-column:1/-1}
+label{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin-bottom:7px}
+input{width:100%;font:500 17px var(--sans);color:var(--txt);background:#0d141a;border:1px solid var(--line);border-radius:12px;padding:14px 14px;outline:none}
+input:focus-visible{border-color:var(--green);box-shadow:0 0 0 3px rgba(63,174,79,.25)}
+.hint{font-size:12px;color:var(--mut);margin-top:6px}
+.result{margin-top:18px}
+.result[hidden]{display:none}
+.verdict{font-size:clamp(22px,6vw,28px);font-weight:700;letter-spacing:-.01em;line-height:1.2}
+.verdict.ok{color:var(--green2)} .verdict.gap{color:var(--warn)}
+.sub{color:var(--mut);margin-top:6px;font-size:15px}
+.bar{height:10px;border-radius:99px;background:rgba(255,255,255,.08);margin:18px 0 6px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--green),var(--green2));border-radius:99px;transition:width .5s ease}
+.pct{font-family:var(--mono);font-size:12px;color:var(--mut)}
+.stats{display:grid;gap:10px;margin-top:18px}
+.stat{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:13px 0;border-top:1px solid var(--line)}
+.stat span{color:var(--mut);font-size:14px}
+.stat b{font-size:19px;font-weight:600;white-space:nowrap}
+.actions{display:grid;gap:10px;margin-top:20px}
+.btn{display:block;text-align:center;text-decoration:none;font:600 16px var(--sans);padding:16px;border-radius:12px;border:1px solid var(--line);color:var(--txt);background:rgba(255,255,255,.05);cursor:pointer}
+.btn.main{background:var(--green);border-color:var(--green);color:#04120a;box-shadow:0 8px 28px rgba(63,174,79,.28)}
+.btn:focus-visible{outline:3px solid var(--green2);outline-offset:2px}
+.btn:hover{filter:brightness(1.08)}
+.legal{font-size:12px;color:var(--mut);margin-top:26px;line-height:1.55}
+@media (max-width:380px){.grid{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div class="brand">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#3fae4f" stroke-width="2" aria-hidden="true"><path d="M3 5l9 14L21 5"/></svg>
+    <span id="marca">VERTEX CAPITAL</span>
+  </div>
+
+  <h1>Seu padrão de vida está no <em>caminho certo?</em></h1>
+  <p class="lead">Veja quanto você precisa acumular para manter o seu padrão de vida depois que parar de trabalhar, sem contar com o INSS.</p>
+
+  <section class="panel" aria-label="Dados da simulação">
+    <div class="grid">
+      <div><label for="idade">Sua idade hoje</label><input id="idade" type="number" inputmode="numeric" min="18" max="80" value="35"></div>
+      <div><label for="indep">Parar de trabalhar aos</label><input id="indep" type="number" inputmode="numeric" min="30" max="85" value="60"></div>
+      <div class="full"><label for="renda">Renda mensal desejada (R$)</label><input id="renda" type="number" inputmode="numeric" min="0" step="500" value="20000">
+        <p class="hint">Valor em reais de hoje, o quanto você quer ter por mês.</p></div>
+      <div><label for="patrimonio">Patrimônio atual (R$)</label><input id="patrimonio" type="number" inputmode="numeric" min="0" step="1000" value="150000"></div>
+      <div><label for="aporte">Aporte mensal (R$)</label><input id="aporte" type="number" inputmode="numeric" min="0" step="100" value="3000"></div>
+      <div class="full"><label for="retorno">Retorno real ao ano (%)</label><input id="retorno" type="number" inputmode="decimal" min="0" max="15" step="0.5" value="5">
+        <p class="hint">Rentabilidade acima da inflação. Quanto menor, mais conservadora a conta.</p></div>
+    </div>
+
+    <div class="result" id="res" hidden aria-live="polite">
+      <p class="verdict" id="verdict"></p>
+      <p class="sub" id="sub"></p>
+      <div class="bar"><i id="fill"></i></div>
+      <p class="pct" id="pct"></p>
+      <div class="stats">
+        <div class="stat"><span>Patrimônio necessário</span><b id="alvo"></b></div>
+        <div class="stat"><span>Projeção com seu aporte atual</span><b id="proj"></b></div>
+        <div class="stat"><span>Aporte mensal necessário</span><b id="apnec"></b></div>
+      </div>
+      <div class="actions">
+        <a class="btn main" id="cta" href="#" target="_blank" rel="noopener">Agendar diagnóstico gratuito</a>
+        <button class="btn" id="baixar" type="button">Baixar resultado como imagem</button>
+      </div>
+    </div>
+  </section>
+
+  <p class="legal">Simulação educativa, feita em valores de hoje (já descontada a inflação) e considerando renda até os <span id="idadeFinal">90</span> anos. Não considera INSS, impostos nem taxas, e não é recomendação de investimento. Para um plano completo, converse com um planejador financeiro.</p>
+</main>
+
+<script>
+/* ===== CONFIGURAÇÃO: é só editar aqui ===== */
+const CONFIG = {
+  marca: "VERTEX CAPITAL",
+  diagnosticoUrl: "https://www.vertexcapitalbr.com.br/",  // link do botão "Agendar diagnóstico"
+  idadeFinal: 90                                           // até que idade a renda deve durar
+};
+
+const $ = id => document.getElementById(id);
+const brl = v => v.toLocaleString('pt-BR', {style:'currency', currency:'BRL', maximumFractionDigits:0});
+const pv  = (p,i,n) => i < 1e-9 ? p*n : p*(1-Math.pow(1+i,-n))/i;   // valor presente de uma renda
+const fva = (p,i,n) => i < 1e-9 ? p*n : p*(Math.pow(1+i,n)-1)/i;    // valor futuro de aportes
+let last = null;
+
+$('marca').textContent = CONFIG.marca;
+$('cta').href = CONFIG.diagnosticoUrl;
+$('idadeFinal').textContent = CONFIG.idadeFinal;
+
+function calcular(){
+  const g = id => parseFloat($(id).value) || 0;
+  const idade=g('idade'), indep=g('indep'), renda=g('renda'), pat=g('patrimonio'), ap=g('aporte');
+  const r = Math.max(g('retorno'),0)/100;
+  const m1=(indep-idade)*12, m2=(CONFIG.idadeFinal-indep)*12;
+  if(m1<=0 || m2<=0 || renda<=0){ $('res').hidden=true; last=null; return; }
+
+  const i = Math.pow(1+r,1/12)-1;
+  const cresc = Math.pow(1+i,m1);
+  const alvo = pv(renda,i,m2);
+  const proj = pat*cresc + fva(ap,i,m1);
+  const apNec = Math.max(0, alvo-pat*cresc) / fva(1,i,m1);
+  const pct = Math.min(100, proj/alvo*100);
+  const ok = proj >= alvo;
+
+  $('verdict').textContent = ok ? 'Você está no caminho certo.' : 'Seu plano ainda não fecha.';
+  $('verdict').className = 'verdict ' + (ok ? 'ok' : 'gap');
+  $('sub').textContent = ok
+    ? 'Com esse ritmo, sua renda de ' + brl(renda) + '/mês se sustenta até os ' + CONFIG.idadeFinal + ' anos.'
+    : 'Faltam ' + brl(Math.max(0,apNec-ap)) + ' por mês de aporte para chegar lá.';
+  $('fill').style.width = pct.toFixed(0) + '%';
+  $('pct').textContent = pct.toFixed(0) + '% do patrimônio necessário';
+  $('alvo').textContent = brl(alvo);
+  $('proj').textContent = brl(proj);
+  $('apnec').textContent = brl(apNec);
+  $('res').hidden = false;
+  last = {alvo, proj, renda, indep, pct, ok};
+}
+
+/* ===== Card para postar nos stories (1080x1350) ===== */
+function quebrar(x, texto, maxW){
+  const palavras = texto.split(' '), linhas = []; let atual = '';
+  palavras.forEach(p => {
+    const t = atual ? atual+' '+p : p;
+    if(x.measureText(t).width > maxW && atual){ linhas.push(atual); atual = p; } else atual = t;
+  });
+  linhas.push(atual); return linhas;
+}
+function baixarCard(){
+  if(!last) return;
+  const W=1080, H=1350, c=document.createElement('canvas'); c.width=W; c.height=H;
+  const x=c.getContext('2d');
+  const bg=x.createLinearGradient(0,0,W,H); bg.addColorStop(0,'#070d0c'); bg.addColorStop(1,'#0f2a1b');
+  x.fillStyle=bg; x.fillRect(0,0,W,H);
+
+  x.fillStyle='#3fae4f'; x.font='700 34px Inter,system-ui,sans-serif';
+  x.fillText(CONFIG.marca, 90, 130);
+
+  x.fillStyle='#8a9a92'; x.font='500 34px Inter,system-ui,sans-serif';
+  x.fillText('Para manter meu padrão de vida, preciso de', 90, 400);
+
+  x.fillStyle='#ffffff'; x.font='700 128px Inter,system-ui,sans-serif';
+  x.fillText(brl(last.alvo), 90, 540);
+
+  x.fillStyle='#e9eeea'; x.font='500 40px Inter,system-ui,sans-serif';
+  quebrar(x, 'para viver com ' + brl(last.renda) + ' por mês a partir dos ' + last.indep + ' anos.', 900)
+    .forEach((l,k) => x.fillText(l, 90, 640 + k*56));
+
+  x.fillStyle='rgba(255,255,255,.1)'; x.fillRect(90, 860, 900, 22);
+  x.fillStyle = last.ok ? '#58c468' : '#3fae4f'; x.fillRect(90, 860, 900*last.pct/100, 22);
+  x.fillStyle='#8a9a92'; x.font='500 32px Inter,system-ui,sans-serif';
+  x.fillText('Hoje estou em ' + last.pct.toFixed(0) + '% do caminho', 90, 940);
+
+  x.fillStyle='#e9eeea'; x.font='600 40px Inter,system-ui,sans-serif';
+  x.fillText('Simule o seu também.', 90, 1130);
+  x.fillStyle='#8a9a92'; x.font='400 28px Inter,system-ui,sans-serif';
+  x.fillText('Simulação educativa, não é recomendação de investimento.', 90, 1250);
+
+  c.toBlob(b => {
+    const a=document.createElement('a'); a.href=URL.createObjectURL(b);
+    a.download='minha-simulacao-vertex.png'; a.click(); URL.revokeObjectURL(a.href);
+  }, 'image/png');
+}
+
+document.querySelectorAll('input').forEach(el => el.addEventListener('input', calcular));
+$('baixar').addEventListener('click', baixarCard);
+calcular();
+</script>
+</body>
+</html>
